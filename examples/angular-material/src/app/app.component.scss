@@ -1,0 +1,8 @@
+@use "tokens";
+
+:host {
+  display: block;
+  padding: map-get(tokens.$spacers, 4);
+  color: var(--mat-sys-on-surface);
+  border-radius: var(--mat-sys-corner-medium);
+}

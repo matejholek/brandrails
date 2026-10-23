@@ -4,11 +4,11 @@
 
 Brandrails turns the design decisions already in your codebase into one `tokens.json` ([DTCG format](https://www.designtokens.org/)), generates design rules for every AI tool your team uses, and flags drift on every pull request.
 
-> Status: v0.1, early. Feedback and issues welcome.
+> Status: v0.2, early. Feedback and issues welcome. See the [changelog](CHANGELOG.md).
 
 ## What it does
 
-1. **Reads** tokens from Tailwind v4 `@theme`, CSS custom properties and SCSS.
+1. **Reads** tokens from Tailwind v4 `@theme`, CSS custom properties, SCSS variables and maps, and Angular (`angular.json` styles, Angular Material 3 themes).
 2. **Writes** one DTCG `tokens.json` as the single source of truth.
 3. **Generates** rules for:
    - `AGENTS.md` (design section) and `CLAUDE.md` (imports `@AGENTS.md`)
@@ -24,14 +24,20 @@ Brandrails turns the design decisions already in your codebase into one `tokens.
 
 ### As an agent skill
 
-The skill is [`skill/brandrails-skill.md`](skill/brandrails-skill.md). Install it into your project with:
+The skill is the folder [`skill/brandrails/`](skill/brandrails/SKILL.md), laid out the way agents discover skills. Install it with:
 
 ```bash
 npx brandrails skill                  # Claude Code: .claude/skills/brandrails/SKILL.md
 npx brandrails skill --agent codex    # or cursor
 ```
 
-Then ask your agent to "make this repo AI-ready". (Agents only discover a skill saved as `SKILL.md` in a folder named after it, which is why the installed copy is renamed.)
+or copy the folder yourself, with no renaming:
+
+```bash
+cp -r node_modules/brandrails/skill/brandrails .claude/skills/
+```
+
+Then run `/brandrails` in your agent, or ask it to "make this repo AI-ready".
 
 ### As a GitHub Action
 
@@ -60,6 +66,10 @@ Node 20 or newer. Run it in your project:
 # First run: read tokens from your CSS and create tokens.json, the rules files and design/tokens.md
 npx brandrails generate --from src/index.css
 
+# SCSS and Angular work the same way
+npx brandrails generate --from src/styles.scss
+npx brandrails generate --from angular.json   # or just `generate` in an Angular workspace with no tokens.json yet
+
 # After that, edit tokens.json and regenerate. A second run with no changes writes nothing.
 npx brandrails generate
 ```
@@ -70,13 +80,13 @@ Check a branch for design drift (what the GitHub Action runs on every PR):
 npx brandrails check --base main --ignore "public/**"
 ```
 
-It scans only lines added since `main` and fails on hard-coded hex, `rgb()`/`hsl()` colours and px spacing or radius (CSS declarations and Tailwind values like `p-[13px]`). Token definitions (`--color-x: #fff`), `0px`, border widths and build output are allowed. It also fails when the rules files are out of date with `tokens.json`. Put `brandrails-ignore` in a comment on a line to allow it.
+It scans only lines added since `main` and fails on hard-coded hex, `rgb()`/`hsl()` colours and px spacing or radius (CSS declarations, Tailwind values like `p-[13px]` and Angular bindings like `[style.padding.px]`). Token definitions (`--color-x: #fff`, `$color-x: #fff`, SCSS map entries), `0px`, border widths and build output are allowed. It also fails when the rules files are out of date with `tokens.json`. Put `brandrails-ignore` in a comment on a line to allow it.
 
 ## Roadmap
 
-- **v0.1** — React + Tailwind v4 and plain CSS / SCSS readers, the rules writers, drift check
-- **v0.2** — Angular (Material 3 / SCSS maps) example, Figma variables compare
-- **v0.3** — Vue and web components
+- **v0.1** — React + Tailwind v4 and plain CSS readers, the rules writers, drift check
+- **v0.2** — Angular (`angular.json`, Material 3 themes), SCSS variables and maps, skill shipped as `skill/brandrails/SKILL.md`
+- **v0.3** — Figma variables compare, Vue and web components
 
 ## License
 

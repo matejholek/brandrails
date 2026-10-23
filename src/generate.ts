@@ -1,7 +1,11 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { parseDtcg, toDtcg, type DtcgResult, type TokenGroup } from "./dtcg.js";
+import { readAngularJson } from "./read/angular.js";
+import type { CustomProperties } from "./read/blocks.js";
 import { readCssVars } from "./read/css-vars.js";
+import { fromMaterialSys, readMaterialTheme } from "./read/material.js";
+import { readSassVariables, readScssVariables, scssDependencies, stripScssComments } from "./read/scss.js";
 import { readTailwindTheme } from "./read/tailwind-theme.js";
 import { writeAgentsMd } from "./write/agents-md.js";
 import { writeClaudeMd } from "./write/claude-md.js";
@@ -14,7 +18,7 @@ import { REFERENCE_PATH, type RenderOptions } from "./write/rules.js";
 export interface GenerateOptions {
   root: string;
   tokens: string;
-  /** CSS files to read tokens from; when given, tokens.json is (re)written from them. */
+  /** CSS, SCSS or angular.json files to read tokens from; when given, tokens.json is (re)written from them. */
   from?: string[];
   /** Full token tables instead of the compact list. */
   full?: boolean;
@@ -29,13 +33,46 @@ export const RULES_FILES = [
   REFERENCE_PATH,
 ] as const;
 
-export function tokensFromCss(files: string[]): DtcgResult {
-  const props = {};
+export interface ReadResult extends DtcgResult {
+  /** Things the reader found but could not turn into tokens, for the user to act on. */
+  notes: string[];
+}
+
+/**
+ * Reads tokens from stylesheets. An `angular.json` expands to the workspace's global styles;
+ * SCSS files pull in their local `@use` / `@import` partials first. Later files win.
+ */
+export function tokensFromFiles(files: string[]): ReadResult {
+  const props: CustomProperties = {};
+  const notes = new Set<string>();
+  const seen = new Set<string>();
+  const readStyles = (file: string, includePaths: string[]) => {
+    if (seen.has(file)) return;
+    seen.add(file);
+    const source = readFileSync(file, "utf8");
+    if (/\.s[ac]ss$/.test(file)) {
+      for (const dep of scssDependencies(file, source, includePaths)) readStyles(dep, includePaths);
+      const theme = readMaterialTheme(source);
+      for (const palette of theme.palettes) {
+        notes.add(`Angular Material colours come from ${palette} at build time; add mat.theme-overrides() or --mat-sys-* values to capture them as tokens.`);
+      }
+      Object.assign(props, file.endsWith(".sass") ? readSassVariables(source) : readScssVariables(source), theme.props);
+    }
+    const css = /\.scss$/.test(file) ? stripScssComments(source) : source;
+    const vars: CustomProperties = { ...readTailwindTheme(css), ...readCssVars(css) };
+    for (const [prop, value] of Object.entries(vars)) {
+      const [name, v] = prop.startsWith("--mat-sys-") ? fromMaterialSys(prop.slice(10), value) : [prop, value];
+      props[name] = v;
+    }
+  };
   for (const file of files) {
-    const css = readFileSync(file, "utf8");
-    Object.assign(props, readTailwindTheme(css), readCssVars(css));
+    if (file.endsWith("angular.json")) {
+      const angular = readAngularJson(file);
+      for (const pkg of angular.packages) notes.add(`${pkg} is a package stylesheet and was not read.`);
+      for (const style of angular.files) readStyles(style, angular.includePaths);
+    } else readStyles(file, []);
   }
-  return toDtcg(props);
+  return { ...toDtcg(props), notes: [...notes] };
 }
 
 export function renderAll(tokens: TokenGroup, read: (path: string) => string, options: RenderOptions = {}): Record<string, string> {
@@ -55,6 +92,8 @@ export interface GenerateResult {
   skipped: string[];
   /** Tokens in tokens.json with no $type. */
   untyped: string[];
+  /** Reader notes (with --from). */
+  notes: string[];
 }
 
 /** Writes tokens.json (with --from) and the rules files. */
@@ -72,16 +111,19 @@ export function generate({ root, tokens: tokensPath, from, full }: GenerateOptio
   let tokens: TokenGroup;
   let skipped: string[] = [];
   let untyped: string[] = [];
+  let notes: string[] = [];
+  // An Angular workspace with no tokens.json yet: read its global styles.
+  if (!from?.length && !existsSync(abs(tokensPath)) && existsSync(abs("angular.json"))) from = ["angular.json"];
   if (from?.length) {
-    ({ tokens, skipped } = tokensFromCss(from.map(abs)));
+    ({ tokens, skipped, notes } = tokensFromFiles(from.map(abs)));
     put(tokensPath, JSON.stringify(tokens, null, 2) + "\n");
   } else {
     if (!existsSync(abs(tokensPath))) {
-      throw new Error(`${tokensPath} not found. Run with --from <css files> to create it.`);
+      throw new Error(`${tokensPath} not found. Run with --from <css, scss or angular.json> to create it.`);
     }
     ({ tokens, untyped } = parseDtcg(read(tokensPath)));
   }
 
   for (const [path, content] of Object.entries(renderAll(tokens, read, { full }))) put(path, content);
-  return { changed, skipped, untyped };
+  return { changed, skipped, untyped, notes };
 }
