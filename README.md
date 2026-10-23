@@ -39,7 +39,11 @@ jobs:
       - uses: matejholek/brandrails@v1
         with:
           command: check
+          tokens: tokens.json
+          ignore: "public/** legacy/**"   # optional
 ```
+
+Problems show up as annotations on the PR diff.
 
 ### CLI
 
@@ -53,7 +57,13 @@ node bin/brandrails.js generate --root ../your-app --from src/index.css
 node bin/brandrails.js generate --root ../your-app
 ```
 
-`brandrails check` (drift check) is next.
+Check a branch for design drift (what the GitHub Action runs on every PR):
+
+```bash
+node bin/brandrails.js check --base main --ignore "public/**"
+```
+
+It scans only lines added since `main` and fails on hard-coded hex, `rgb()`/`hsl()` colours and px spacing or radius (CSS declarations and Tailwind values like `p-[13px]`). Token definitions (`--color-x: #fff`), `0px`, border widths and build output are allowed. It also fails when the rules files are out of date with `tokens.json`. Put `brandrails-ignore` in a comment on a line to allow it.
 
 ## Roadmap
 

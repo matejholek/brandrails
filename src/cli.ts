@@ -1,9 +1,10 @@
 import { parseArgs } from "node:util";
+import { check } from "./check/index.js";
 import { generate } from "./generate.js";
 
 const USAGE = `Usage:
   brandrails generate [--tokens tokens.json] [--from src/index.css ...] [--root .] [--full]
-  brandrails check    (coming in v0.1)`;
+  brandrails check    [--base main] [--tokens tokens.json] [--root .] [--ignore "public/**" ...]`;
 
 export function main(argv: string[]): number {
   const [command, ...rest] = argv;
@@ -19,6 +20,7 @@ export function main(argv: string[]): number {
       root: { type: "string", default: "." },
       base: { type: "string" },
       full: { type: "boolean", default: false },
+      ignore: { type: "string", multiple: true },
     },
   });
 
@@ -35,9 +37,19 @@ export function main(argv: string[]): number {
       }
       return 0;
     }
-    case "check":
-      console.error("brandrails check: not implemented yet (v0.1 in progress).");
+    case "check": {
+      const findings = check({ root: values.root!, tokens: values.tokens!, base: values.base || "main", ignore: values.ignore });
+      const annotate = process.env.GITHUB_ACTIONS === "true";
+      for (const f of findings) {
+        console.log(annotate ? `::error file=${f.file},line=${f.line},title=brandrails ${f.rule}::${f.message}` : `${f.file}:${f.line}  ${f.message}`);
+      }
+      if (!findings.length) {
+        console.log("No design drift found.");
+        return 0;
+      }
+      console.log(`\n${findings.length} problem${findings.length === 1 ? "" : "s"}. Add a brandrails-ignore comment on a line to allow it.`);
       return 1;
+    }
     default:
       console.error(`Unknown command: ${command}\n\n${USAGE}`);
       return 1;

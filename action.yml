@@ -14,6 +14,10 @@ inputs:
     description: Path to the DTCG tokens file.
     required: false
     default: tokens.json
+  ignore:
+    description: Extra globs for `check` to skip, space-separated (build output is always skipped).
+    required: false
+    default: ""
   base:
     description: Base ref to diff against for `check`.
     required: false
@@ -29,4 +33,16 @@ runs:
       working-directory: ${{ github.action_path }}
       run: npm ci --no-audit --no-fund && npm run build
     - shell: bash
-      run: node "${{ github.action_path }}/bin/brandrails.js" "${{ inputs.command }}" --tokens "${{ inputs.tokens }}" --base "${{ inputs.base }}"
+      env:
+        BR_COMMAND: ${{ inputs.command }}
+        BR_TOKENS: ${{ inputs.tokens }}
+        BR_BASE: ${{ inputs.base }}
+        BR_IGNORE: ${{ inputs.ignore }}
+      run: |
+        set -f
+        args=(--tokens "$BR_TOKENS")
+        if [ "$BR_COMMAND" = check ]; then
+          args+=(--base "${BR_BASE:-main}")
+          for g in $BR_IGNORE; do args+=(--ignore "$g"); done
+        fi
+        node "${{ github.action_path }}/bin/brandrails.js" "$BR_COMMAND" "${args[@]}"
