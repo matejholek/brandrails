@@ -15,10 +15,14 @@ const COLOUR_FN = /\b(?:rgba?|hsla?|oklch|oklab|lab|lch)\(\s*-?\d/g;
 // px on spacing and radius: CSS declarations and Tailwind arbitrary values like p-[13px].
 const PX_DECL =
   /(?<![\w-])(?:margin|padding|gap|row-gap|column-gap|inset|top|right|bottom|left|border-radius|(?:margin|padding|inset|scroll-margin|scroll-padding)-[a-z-]+|border-[a-z-]*radius)\s*:[^;{}]*?(?<![\w.])(?!0px)\d*\.?\d+px/g;
+// Angular unit bindings: [style.padding.px]="12", [style.border-radius.px]="radius".
+const PX_ANGULAR = /\[style\.(?:margin|padding|gap|row-gap|column-gap|inset|top|right|bottom|left|border-radius|(?:margin|padding|inset)-[a-z-]+|border-[a-z-]*radius)\.px\]/g;
 const PX_TAILWIND = /(?<![\w-])(?:-?(?:[mp][trblxyse]?|gap(?:-[xy])?|space-[xy]|inset(?:-[xy])?|top|right|bottom|left|rounded(?:-[a-z]{1,2})?))-\[(?!0px)\d*\.?\d+px\]/g;
 
-/** A custom property declaration (`--name: value`) defines a token; it is never drift. */
-const TOKEN_DEFINITION = /^\s*--[\w-]+\s*:/;
+/** A custom property or SCSS variable declaration (`--name: value`, `$name: value`) defines a token; it is never drift. */
+const TOKEN_DEFINITION = /^\s*(?:--|\$)[\w-]+\s*:/;
+/** An SCSS map entry on its own line (`primary: #fff,`, no `;`), e.g. in `$colors: (…)` or `mat.theme-overrides((…))`. */
+const SCSS_MAP_ENTRY = /^\s*["']?[\w-]+["']?\s*:[^;{}]+$/;
 
 export interface AddedLine {
   file: string;
@@ -53,12 +57,14 @@ export function scanLines(lines: AddedLine[], skip: (file: string) => boolean = 
   for (const { file, line, text } of lines) {
     if (!STYLE_FILE.test(file) || skip(file)) continue;
     if (IGNORE_COMMENT.test(text) || TOKEN_DEFINITION.test(text)) continue;
+    if (/\.s[ac]ss$/.test(file) && SCSS_MAP_ENTRY.test(text)) continue;
     const report = (rule: Finding["rule"], value: string, hint: string) =>
       findings.push({ file, line, rule, message: `Hard-coded ${value}: ${hint}` });
     for (const m of text.matchAll(HEX)) report("hex-colour", m[0], "use a colour token");
     for (const m of text.matchAll(COLOUR_FN)) report("colour-function", `${m[0].replace(/\(.*/, "")}() colour`, "use a colour token");
     for (const m of text.matchAll(PX_DECL)) report("px-spacing", m[0].match(/[\d.]+px/)![0], "use a spacing or radius token");
     for (const m of text.matchAll(PX_TAILWIND)) report("px-spacing", m[0], "use a spacing or radius token");
+    for (const m of text.matchAll(PX_ANGULAR)) report("px-spacing", m[0], "bind a spacing or radius token instead of px");
   }
   return findings;
 }

@@ -1,0 +1,22 @@
+@use "@angular/material" as mat;
+@use "tokens";
+
+html {
+  color-scheme: light;
+  @include mat.theme((
+    color: mat.$azure-palette,
+    typography: (plain-family: Roboto, brand-family: "Inter"),
+    density: 0,
+  ));
+  @include mat.theme-overrides((
+    primary: #4f46e5,
+    surface: #ffffff,
+    corner-medium: 12px,
+  ));
+  --mat-sys-level1: 0 1px 2px rgb(0 0 0 / 0.06);
+}
+
+body {
+  margin: 0;
+  font-family: var(--mat-sys-body-medium-font);
+}

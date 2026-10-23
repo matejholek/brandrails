@@ -16,3 +16,4 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build && node bin/brandrails.js generate --root examples/react-tailwind --from src/index.css && git status --porcelain
+      - run: node bin/brandrails.js generate --root examples/angular-material

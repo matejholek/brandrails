@@ -1,0 +1,21 @@
+// Neutral sample tokens for Brandrails tests.
+@use "sass:map";
+
+$colors: (
+  ink: #1c1917,
+  ink-muted: #57534e,
+  border: #e7e5e4,
+  danger: #dc2626,
+) !default;
+
+$color-accent: map.get($colors, ink) !default;
+
+$spacers: (
+  1: 0.25rem,
+  2: 0.5rem,
+  4: 1rem,
+);
+
+$radius-sm: 4px;
+$font-family-mono: "JetBrains Mono", ui-monospace, monospace;
+$duration-fast: 120ms;
