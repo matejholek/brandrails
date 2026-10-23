@@ -26,9 +26,19 @@ describe("real-world token files", () => {
   });
 
   it("renders nested paths, composite values and descriptions", () => {
-    const rules = renderRules(parseDtcg(json).tokens);
+    const rules = renderRules(parseDtcg(json).tokens, 2, "table");
     expect(rules).toContain("| `color.text.primary` | `{color.black.900}` | Body copy \\| headings |");
     expect(rules).toContain('| `shadow.hard` | `{"color":"{color.black.900}","offsetX":"8px","offsetY":"8px","blur":"0px"}` |  |');
+  });
+
+  it("keeps always-loaded files short: names only, scales collapsed", () => {
+    const index = renderRules(parseDtcg(json).tokens, 2, "index");
+    expect(index).toContain("- Colour: `color.black.{0,900}`, `color.white`, `color.text.primary`");
+    expect(index).not.toContain("#212121");
+    const list = renderRules(parseDtcg(json).tokens, 2, "list");
+    expect(list).toContain("- `color.black.*`: 0={color.white}, 900=#212121");
+    expect(list).toContain("- `shadow.hard`: color: {color.black.900}; offsetX: 8px; offsetY: 8px; blur: 0px");
+    expect(list).toContain("- `color.text.primary`: {color.black.900} (Body copy | headings)");
   });
 
   it("reads only the base :root, not media queries or theme overrides", () => {

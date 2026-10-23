@@ -15,6 +15,9 @@ Brandrails turns the design decisions already in your codebase into one `tokens.
    - `.cursor/rules/design.mdc`
    - `.github/copilot-instructions.md`
    - Figma Make guidelines (markdown)
+   - `design/tokens.md`, the full reference with values and usage notes
+
+   Files agents load on every request (AGENTS.md, Copilot) only list token names and point to `design/tokens.md`, so a big design system doesn't eat the context window. The Cursor rule attaches only when a UI file is involved. Pass `--full` to put full tables everywhere.
 4. **Checks** each PR for hard-coded colours and px values, and for rules files that are stale compared with `tokens.json`.
 
 ## Two ways to use it
@@ -43,7 +46,7 @@ jobs:
 Not on npm yet. From a clone of this repo: `npm ci && npm run build`, then:
 
 ```bash
-# First run: read tokens from your CSS and create tokens.json + the five rules files
+# First run: read tokens from your CSS and create tokens.json, the rules files and design/tokens.md
 node bin/brandrails.js generate --root ../your-app --from src/index.css
 
 # After that, edit tokens.json and regenerate. A second run with no changes writes nothing.
@@ -54,7 +57,7 @@ node bin/brandrails.js generate --root ../your-app
 
 ## Roadmap
 
-- **v0.1** — React + Tailwind v4 and plain CSS / SCSS readers, the five rules writers, drift check
+- **v0.1** — React + Tailwind v4 and plain CSS / SCSS readers, the rules writers, drift check
 - **v0.2** — Angular (Material 3 / SCSS maps) example, Figma variables compare
 - **v0.3** — Vue and web components
 

@@ -1,4 +1,4 @@
-import { flatten, type TokenGroup } from "../dtcg.js";
+import { flatten, type FlatToken, type TokenGroup } from "../dtcg.js";
 
 export const START = "<!-- brandrails:start -->";
 export const END = "<!-- brandrails:end -->";
@@ -14,8 +14,18 @@ const GROUP_TITLES: Record<string, string> = {
   easing: "Motion: easing",
 };
 
-/** The rules and token tables every target shares, headed at the given level. */
-export function renderRules(tokens: TokenGroup, level = 2): string {
+export interface RenderOptions {
+  /** Full token tables in every file, instead of an index plus the design/tokens.md reference. */
+  full?: boolean;
+}
+
+/** `index`: names only, for files agents load on every request. `list`: values and short notes. `table`: everything. */
+export type Style = "index" | "list" | "table";
+
+export const REFERENCE_PATH = "design/tokens.md";
+
+/** The rules and token listing every target shares, headed at the given level. */
+export function renderRules(tokens: TokenGroup, level: number, style: Style): string {
   const h = "#".repeat(level);
   const lines = [
     `${h} Design system`,
@@ -24,18 +34,92 @@ export function renderRules(tokens: TokenGroup, level = 2): string {
     "",
     "- Use these tokens for every colour, spacing, radius, font, shadow and motion value.",
     "- Never write raw hex, rgb or hsl colours, or px values for spacing and radius.",
+    "- Prefer role tokens (values like `{color.black.900}`) over raw scale steps.",
     "- If no token fits, ask before adding a new value.",
   ];
-  let current = "";
-  for (const { path, value, description } of flatten(tokens)) {
-    const group = path.split(".")[0];
-    if (group !== current) {
-      current = group;
-      lines.push("", `${h}# ${GROUP_TITLES[group] ?? group}`, "", "| Token | Value | Notes |", "| --- | --- | --- |");
-    }
-    lines.push(`| \`${path}\` | \`${cell(formatValue(value))}\` | ${cell(description ?? "")} |`);
+  const groups = groupTokens(tokens);
+  if (style === "index") {
+    lines.push(
+      `- Before writing or changing styles, read \`${REFERENCE_PATH}\` for values and usage notes.`,
+      "",
+      `${h}# Tokens`,
+      "",
+      ...[...groups].map(([group, list]) => `- ${GROUP_TITLES[group] ?? group}: ${indexLine(list)}`),
+    );
+    return lines.join("\n");
+  }
+  for (const [group, list] of groups) {
+    lines.push("", `${h}# ${GROUP_TITLES[group] ?? group}`, "");
+    lines.push(...(style === "table" ? tableRows(list) : compactLines(list)));
   }
   return lines.join("\n");
+}
+
+function groupTokens(tokens: TokenGroup): Map<string, FlatToken[]> {
+  const groups = new Map<string, FlatToken[]>();
+  for (const token of flatten(tokens)) {
+    const group = token.path.split(".")[0];
+    groups.set(group, [...(groups.get(group) ?? []), token]);
+  }
+  return groups;
+}
+
+const parentOf = (path: string) => path.slice(0, path.lastIndexOf("."));
+const leafOf = (path: string) => path.slice(path.lastIndexOf(".") + 1);
+
+/** Consecutive tokens that share a parent path. */
+function runs(list: FlatToken[]): FlatToken[][] {
+  const out: FlatToken[][] = [];
+  for (const token of list) {
+    const last = out.at(-1);
+    if (last && parentOf(last[0].path) === parentOf(token.path)) last.push(token);
+    else out.push([token]);
+  }
+  return out;
+}
+
+// `color.text.{primary,muted}`; long scales show their ends only.
+function indexLine(list: FlatToken[]): string {
+  return runs(list)
+    .map((run) => {
+      if (run.length === 1) return `\`${run[0].path}\``;
+      const leaves = run.map((t) => leafOf(t.path));
+      const shown = leaves.length > 6 ? [leaves[0], "…", leaves.at(-1)] : leaves;
+      return `\`${parentOf(run[0].path)}.{${shown.join(",")}}\``;
+    })
+    .join(", ");
+}
+
+function tableRows(list: FlatToken[]): string[] {
+  return [
+    "| Token | Value | Notes |",
+    "| --- | --- | --- |",
+    ...list.map(({ path, value, description }) => `| \`${path}\` | \`${cell(formatValue(value))}\` | ${cell(description ?? "")} |`),
+  ];
+}
+
+// Siblings without notes (a scale or ramp) share one line; everything else gets its own.
+function compactLines(list: FlatToken[]): string[] {
+  const lines: string[] = [];
+  for (const run of runs(list)) {
+    if (run.length >= 2 && run.every((t) => !t.description)) {
+      const steps = run.map((t) => `${leafOf(t.path)}=${compactValue(t.value)}`);
+      lines.push(`- \`${parentOf(run[0].path)}.*\`: ${steps.join(", ")}`);
+      continue;
+    }
+    for (const { path, value, description } of run) {
+      const note = description ? ` (${shortNote(description)})` : "";
+      lines.push(`- \`${path}\`: ${compactValue(value)}${note}`);
+    }
+  }
+  return lines;
+}
+
+/** First sentence, capped, so long design rationale doesn't flood agent context. */
+function shortNote(text: string): string {
+  const flat = text.replace(/\s+/g, " ").trim();
+  const sentence = flat.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? flat;
+  return sentence.length > 120 ? `${sentence.slice(0, 117).trimEnd()}…` : sentence.replace(/\.$/, "");
 }
 
 /** Inserts or replaces a marked section; everything outside the markers is preserved. */
@@ -48,6 +132,15 @@ export function upsertSection(existing: string, body: string): string {
   }
   const base = existing.trimEnd();
   return (base ? `${base}\n\n` : "") + section + "\n";
+}
+
+/** Composite values as `key: value; …` instead of JSON, which costs agents far more tokens. */
+function compactValue(value: unknown): string {
+  if (typeof value !== "object" || value === null) return formatValue(value);
+  if (Array.isArray(value)) return value.map(compactValue).join(", ");
+  return Object.entries(value)
+    .map(([key, v]) => `${key}: ${compactValue(v)}`)
+    .join("; ");
 }
 
 function formatValue(value: unknown): string {

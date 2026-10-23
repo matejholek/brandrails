@@ -2,7 +2,7 @@ import { parseArgs } from "node:util";
 import { generate } from "./generate.js";
 
 const USAGE = `Usage:
-  brandrails generate [--tokens tokens.json] [--from src/index.css ...] [--root .]
+  brandrails generate [--tokens tokens.json] [--from src/index.css ...] [--root .] [--full]
   brandrails check    (coming in v0.1)`;
 
 export function main(argv: string[]): number {
@@ -18,12 +18,13 @@ export function main(argv: string[]): number {
       from: { type: "string", multiple: true },
       root: { type: "string", default: "." },
       base: { type: "string" },
+      full: { type: "boolean", default: false },
     },
   });
 
   switch (command) {
     case "generate": {
-      const { changed, skipped, untyped } = generate({ root: values.root!, tokens: values.tokens!, from: values.from });
+      const { changed, skipped, untyped } = generate({ root: values.root!, tokens: values.tokens!, from: values.from, full: values.full });
       console.log(changed.length ? changed.map((p) => `wrote ${p}`).join("\n") : "Everything is up to date.");
       if (skipped.length) {
         const prefixes = [...new Set(skipped.map((p) => p.slice(2).split("-")[0]))];

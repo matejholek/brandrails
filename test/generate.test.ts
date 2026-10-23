@@ -11,7 +11,7 @@ function sampleProject(): string {
 }
 
 describe("generate", () => {
-  it("creates tokens.json and all five rules files from CSS", () => {
+  it("creates tokens.json and all rules files from CSS", () => {
     const root = sampleProject();
     const { changed } = generate({ root, tokens: "tokens.json", from: ["src/index.css"] });
     expect(changed).toEqual(["tokens.json", ...RULES_FILES]);
