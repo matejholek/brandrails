@@ -4,7 +4,7 @@
 
 Brandrails turns the design decisions already in your codebase into one `tokens.json` ([DTCG format](https://www.designtokens.org/)), generates design rules for every AI tool your team uses, and flags drift on every pull request.
 
-> Status: early. The scaffold is here; v0.1 is being built in the open.
+> Status: v0.1, early. Feedback and issues welcome.
 
 ## What it does
 
@@ -24,7 +24,14 @@ Brandrails turns the design decisions already in your codebase into one `tokens.
 
 ### As an agent skill
 
-Copy [`skill/SKILL.md`](skill/SKILL.md) into your agent's skills folder (Claude Code, Cursor or Codex) and ask it to "make this repo AI-ready".
+The skill is [`skill/brandrails-skill.md`](skill/brandrails-skill.md). Install it into your project with:
+
+```bash
+npx brandrails skill                  # Claude Code: .claude/skills/brandrails/SKILL.md
+npx brandrails skill --agent codex    # or cursor
+```
+
+Then ask your agent to "make this repo AI-ready". (Agents only discover a skill saved as `SKILL.md` in a folder named after it, which is why the installed copy is renamed.)
 
 ### As a GitHub Action
 
@@ -47,20 +54,20 @@ Problems show up as annotations on the PR diff.
 
 ### CLI
 
-Not on npm yet. From a clone of this repo: `npm ci && npm run build`, then:
+Node 20 or newer. Run it in your project:
 
 ```bash
 # First run: read tokens from your CSS and create tokens.json, the rules files and design/tokens.md
-node bin/brandrails.js generate --root ../your-app --from src/index.css
+npx brandrails generate --from src/index.css
 
 # After that, edit tokens.json and regenerate. A second run with no changes writes nothing.
-node bin/brandrails.js generate --root ../your-app
+npx brandrails generate
 ```
 
 Check a branch for design drift (what the GitHub Action runs on every PR):
 
 ```bash
-node bin/brandrails.js check --base main --ignore "public/**"
+npx brandrails check --base main --ignore "public/**"
 ```
 
 It scans only lines added since `main` and fails on hard-coded hex, `rgb()`/`hsl()` colours and px spacing or radius (CSS declarations and Tailwind values like `p-[13px]`). Token definitions (`--color-x: #fff`), `0px`, border widths and build output are allowed. It also fails when the rules files are out of date with `tokens.json`. Put `brandrails-ignore` in a comment on a line to allow it.

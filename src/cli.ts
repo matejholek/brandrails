@@ -1,10 +1,12 @@
 import { parseArgs } from "node:util";
 import { check } from "./check/index.js";
 import { generate } from "./generate.js";
+import { installSkill } from "./skill.js";
 
 const USAGE = `Usage:
   brandrails generate [--tokens tokens.json] [--from src/index.css ...] [--root .] [--full]
-  brandrails check    [--base main] [--tokens tokens.json] [--root .] [--ignore "public/**" ...]`;
+  brandrails check    [--base main] [--tokens tokens.json] [--root .] [--ignore "public/**" ...]
+  brandrails skill    [--agent claude|codex|cursor] [--root .]`;
 
 export function main(argv: string[]): number {
   const [command, ...rest] = argv;
@@ -21,6 +23,7 @@ export function main(argv: string[]): number {
       base: { type: "string" },
       full: { type: "boolean", default: false },
       ignore: { type: "string", multiple: true },
+      agent: { type: "string", default: "claude" },
     },
   });
 
@@ -49,6 +52,11 @@ export function main(argv: string[]): number {
       }
       console.log(`\n${findings.length} problem${findings.length === 1 ? "" : "s"}. Add a brandrails-ignore comment on a line to allow it.`);
       return 1;
+    }
+    case "skill": {
+      const path = installSkill(values.root!, values.agent);
+      console.log(`wrote ${path}\nAsk your agent to "make this repo AI-ready".`);
+      return 0;
     }
     default:
       console.error(`Unknown command: ${command}\n\n${USAGE}`);

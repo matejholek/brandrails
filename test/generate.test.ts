@@ -39,3 +39,12 @@ describe("generate", () => {
     expect(() => generate({ root: sampleProject(), tokens: "tokens.json" })).toThrow(/--from/);
   });
 });
+
+describe("skill", () => {
+  it("installs the bundled skill where Claude Code discovers it", async () => {
+    const { installSkill } = await import("../src/skill.js");
+    const root = mkdtempSync(join(tmpdir(), "brandrails-skill-"));
+    expect(installSkill(root)).toBe(".claude/skills/brandrails/SKILL.md");
+    expect(readFileSync(join(root, ".claude/skills/brandrails/SKILL.md"), "utf8")).toMatch(/^---\nname: brandrails\n/);
+  });
+});
