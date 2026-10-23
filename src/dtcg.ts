@@ -47,3 +47,20 @@ export function toDtcg(props: CustomProperties): TokenGroup {
 export function isToken(node: Token | TokenGroup): node is Token {
   return "$value" in node;
 }
+
+/** Parses tokens.json and checks that every leaf has `$value` and `$type`. */
+export function parseDtcg(json: string): TokenGroup {
+  const tree = JSON.parse(json) as TokenGroup;
+  const walk = (node: Token | TokenGroup, path: string) => {
+    if (typeof node !== "object" || node === null) throw new Error(`tokens.json: ${path} is not an object`);
+    if ("$value" in node) {
+      if (!("$type" in node)) throw new Error(`tokens.json: ${path} has $value but no $type`);
+      return;
+    }
+    for (const [key, child] of Object.entries(node)) {
+      if (!key.startsWith("$")) walk(child, path ? `${path}.${key}` : key);
+    }
+  };
+  walk(tree, "");
+  return tree;
+}

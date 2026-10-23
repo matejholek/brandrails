@@ -38,12 +38,19 @@ jobs:
           command: check
 ```
 
-### CLI (coming with v0.1)
+### CLI
+
+Not on npm yet. From a clone of this repo: `npm ci && npm run build`, then:
 
 ```bash
-npx brandrails generate --tokens tokens.json
-npx brandrails check --base main
+# First run: read tokens from your CSS and create tokens.json + the five rules files
+node bin/brandrails.js generate --root ../your-app --from src/index.css
+
+# After that, edit tokens.json and regenerate. A second run with no changes writes nothing.
+node bin/brandrails.js generate --root ../your-app
 ```
+
+`brandrails check` (drift check) is next.
 
 ## Roadmap
 

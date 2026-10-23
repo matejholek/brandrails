@@ -1,12 +1,9 @@
 #!/usr/bin/env node
-// Placeholder CLI until the readers, writers and drift check land in src/.
-const [command] = process.argv.slice(2);
-const commands = ["generate", "check"];
+import { main } from "../dist/cli.js";
 
-if (!command || !commands.includes(command)) {
-  console.log("Usage: brandrails <generate|check> [options]");
-  process.exit(command ? 1 : 0);
+try {
+  process.exitCode = main(process.argv.slice(2));
+} catch (error) {
+  console.error(`brandrails: ${error instanceof Error ? error.message : error}`);
+  process.exitCode = 1;
 }
-
-console.error(`brandrails ${command}: not implemented yet (v0.1 in progress).`);
-process.exit(1);

@@ -26,4 +26,7 @@ runs:
       with:
         node-version: 20
     - shell: bash
+      working-directory: ${{ github.action_path }}
+      run: npm ci --no-audit --no-fund && npm run build
+    - shell: bash
       run: node "${{ github.action_path }}/bin/brandrails.js" "${{ inputs.command }}" --tokens "${{ inputs.tokens }}" --base "${{ inputs.base }}"
