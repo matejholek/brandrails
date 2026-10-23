@@ -9,7 +9,7 @@ const css = readFileSync(new URL("../examples/react-tailwind/src/index.css", imp
 
 describe("react-tailwind example", () => {
   const props = { ...readTailwindTheme(css), ...readCssVars(css) };
-  const tokens = toDtcg(props);
+  const { tokens } = toDtcg(props);
 
   it("reads @theme and :root but not theme overrides", () => {
     expect(props["--color-ink"]).toBe("#1c1917");

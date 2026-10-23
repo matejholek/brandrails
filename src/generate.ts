@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { parseDtcg, toDtcg, type TokenGroup } from "./dtcg.js";
+import { parseDtcg, toDtcg, type DtcgResult, type TokenGroup } from "./dtcg.js";
 import { readCssVars } from "./read/css-vars.js";
 import { readTailwindTheme } from "./read/tailwind-theme.js";
 import { writeAgentsMd } from "./write/agents-md.js";
@@ -24,7 +24,7 @@ export const RULES_FILES = [
   "design/figma-make-guidelines.md",
 ] as const;
 
-export function tokensFromCss(files: string[]): TokenGroup {
+export function tokensFromCss(files: string[]): DtcgResult {
   const props = {};
   for (const file of files) {
     const css = readFileSync(file, "utf8");
@@ -43,8 +43,16 @@ export function renderAll(tokens: TokenGroup, read: (path: string) => string): R
   };
 }
 
-/** Writes tokens.json (with --from) and the rules files. Returns the paths that changed. */
-export function generate({ root, tokens: tokensPath, from }: GenerateOptions): string[] {
+export interface GenerateResult {
+  changed: string[];
+  /** CSS custom properties left out of tokens.json (with --from). */
+  skipped: string[];
+  /** Tokens in tokens.json with no $type. */
+  untyped: string[];
+}
+
+/** Writes tokens.json (with --from) and the rules files. */
+export function generate({ root, tokens: tokensPath, from }: GenerateOptions): GenerateResult {
   const abs = (p: string) => join(root, p);
   const read = (p: string) => (existsSync(abs(p)) ? readFileSync(abs(p), "utf8") : "");
   const changed: string[] = [];
@@ -56,16 +64,18 @@ export function generate({ root, tokens: tokensPath, from }: GenerateOptions): s
   };
 
   let tokens: TokenGroup;
+  let skipped: string[] = [];
+  let untyped: string[] = [];
   if (from?.length) {
-    tokens = tokensFromCss(from.map(abs));
+    ({ tokens, skipped } = tokensFromCss(from.map(abs)));
     put(tokensPath, JSON.stringify(tokens, null, 2) + "\n");
   } else {
     if (!existsSync(abs(tokensPath))) {
       throw new Error(`${tokensPath} not found. Run with --from <css files> to create it.`);
     }
-    tokens = parseDtcg(read(tokensPath));
+    ({ tokens, untyped } = parseDtcg(read(tokensPath)));
   }
 
   for (const [path, content] of Object.entries(renderAll(tokens, read))) put(path, content);
-  return changed;
+  return { changed, skipped, untyped };
 }

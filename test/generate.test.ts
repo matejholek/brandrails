@@ -13,7 +13,7 @@ function sampleProject(): string {
 describe("generate", () => {
   it("creates tokens.json and all five rules files from CSS", () => {
     const root = sampleProject();
-    const changed = generate({ root, tokens: "tokens.json", from: ["src/index.css"] });
+    const { changed } = generate({ root, tokens: "tokens.json", from: ["src/index.css"] });
     expect(changed).toEqual(["tokens.json", ...RULES_FILES]);
     for (const file of RULES_FILES) {
       expect(readFileSync(join(root, file), "utf8")).toMatchSnapshot(file);
@@ -23,7 +23,7 @@ describe("generate", () => {
   it("makes no changes on a second run from tokens.json", () => {
     const root = sampleProject();
     generate({ root, tokens: "tokens.json", from: ["src/index.css"] });
-    expect(generate({ root, tokens: "tokens.json" })).toEqual([]);
+    expect(generate({ root, tokens: "tokens.json" }).changed).toEqual([]);
   });
 
   it("keeps hand-written CLAUDE.md and AGENTS.md content", () => {

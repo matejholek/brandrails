@@ -1,4 +1,4 @@
-import { isToken, type TokenGroup } from "../dtcg.js";
+import { flatten, type TokenGroup } from "../dtcg.js";
 
 export const START = "<!-- brandrails:start -->";
 export const END = "<!-- brandrails:end -->";
@@ -8,6 +8,7 @@ const GROUP_TITLES: Record<string, string> = {
   spacing: "Spacing",
   radius: "Radius",
   font: "Typography",
+  space: "Spacing",
   shadow: "Shadow",
   duration: "Motion: duration",
   easing: "Motion: easing",
@@ -25,13 +26,14 @@ export function renderRules(tokens: TokenGroup, level = 2): string {
     "- Never write raw hex, rgb or hsl colours, or px values for spacing and radius.",
     "- If no token fits, ask before adding a new value.",
   ];
-  for (const [group, node] of Object.entries(tokens)) {
-    if (isToken(node)) continue;
-    lines.push("", `${h}# ${GROUP_TITLES[group] ?? group}`, "", "| Token | Value |", "| --- | --- |");
-    for (const [name, token] of Object.entries(node)) {
-      if (!isToken(token)) continue;
-      lines.push(`| \`${group}.${name}\` | \`${token.$value.replace(/\|/g, "\\|")}\` |`);
+  let current = "";
+  for (const { path, value, description } of flatten(tokens)) {
+    const group = path.split(".")[0];
+    if (group !== current) {
+      current = group;
+      lines.push("", `${h}# ${GROUP_TITLES[group] ?? group}`, "", "| Token | Value | Notes |", "| --- | --- | --- |");
     }
+    lines.push(`| \`${path}\` | \`${cell(formatValue(value))}\` | ${cell(description ?? "")} |`);
   }
   return lines.join("\n");
 }
@@ -46,4 +48,12 @@ export function upsertSection(existing: string, body: string): string {
   }
   const base = existing.trimEnd();
   return (base ? `${base}\n\n` : "") + section + "\n";
+}
+
+function formatValue(value: unknown): string {
+  return typeof value === "string" ? value : JSON.stringify(value);
+}
+
+function cell(text: string): string {
+  return text.replace(/\|/g, "\\|").replace(/\s*\n\s*/g, " ");
 }

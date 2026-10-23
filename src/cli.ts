@@ -23,8 +23,15 @@ export function main(argv: string[]): number {
 
   switch (command) {
     case "generate": {
-      const changed = generate({ root: values.root!, tokens: values.tokens!, from: values.from });
+      const { changed, skipped, untyped } = generate({ root: values.root!, tokens: values.tokens!, from: values.from });
       console.log(changed.length ? changed.map((p) => `wrote ${p}`).join("\n") : "Everything is up to date.");
+      if (skipped.length) {
+        const prefixes = [...new Set(skipped.map((p) => p.slice(2).split("-")[0]))];
+        console.log(`skipped ${skipped.length} custom properties outside known groups (${prefixes.join(", ")})`);
+      }
+      if (untyped.length) {
+        console.log(`warning: ${untyped.length} tokens have no $type: ${untyped.slice(0, 5).join(", ")}${untyped.length > 5 ? ", …" : ""}`);
+      }
       return 0;
     }
     case "check":

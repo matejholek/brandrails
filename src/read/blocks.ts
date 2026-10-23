@@ -1,22 +1,29 @@
 export type CustomProperties = Record<string, string>;
 
-// Strips comments, then returns the body of every top-level block whose prelude matches.
+// Strips comments, then returns the body of every top-level block (not nested in
+// @media, @supports, …) whose prelude matches exactly.
 export function findBlocks(css: string, prelude: RegExp): string[] {
   const source = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  const exact = new RegExp(`^(?:${prelude.source})$`);
   const bodies: string[] = [];
-  const opener = new RegExp(`(${prelude.source})\\s*\\{`, "g");
-  let match: RegExpExecArray | null;
-  while ((match = opener.exec(source))) {
-    let depth = 1;
-    let i = opener.lastIndex;
-    const start = i;
-    while (i < source.length && depth > 0) {
-      if (source[i] === "{") depth++;
-      else if (source[i] === "}") depth--;
-      i++;
+  let depth = 0;
+  let preludeStart = 0;
+  let bodyStart = -1;
+  for (let i = 0; i < source.length; i++) {
+    const ch = source[i];
+    if (ch === "{") {
+      if (depth === 0 && exact.test(source.slice(preludeStart, i).trim())) bodyStart = i + 1;
+      depth++;
+    } else if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        if (bodyStart !== -1) bodies.push(source.slice(bodyStart, i));
+        bodyStart = -1;
+        preludeStart = i + 1;
+      }
+    } else if (ch === ";" && depth === 0) {
+      preludeStart = i + 1; // e.g. after @import "tailwindcss";
     }
-    bodies.push(source.slice(start, i - 1));
-    opener.lastIndex = i;
   }
   return bodies;
 }
