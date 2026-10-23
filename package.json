@@ -1,0 +1,39 @@
+{
+  "name": "brandrails",
+  "version": "0.0.1",
+  "description": "Keep AI coding agents on your design system: one DTCG tokens.json, generated rules files for Claude Code, Cursor, Copilot and Figma Make, and a drift check on every PR.",
+  "license": "MIT",
+  "author": "Matej Holek",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/matejholek/brandrails.git"
+  },
+  "homepage": "https://github.com/matejholek/brandrails#readme",
+  "bugs": "https://github.com/matejholek/brandrails/issues",
+  "keywords": [
+    "design-tokens",
+    "dtcg",
+    "design-system",
+    "agents-md",
+    "claude-code",
+    "cursor",
+    "copilot",
+    "tailwind",
+    "github-action"
+  ],
+  "type": "module",
+  "bin": {
+    "brandrails": "bin/brandrails.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "skill"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "vitest run"
+  }
+}

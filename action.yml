@@ -1,0 +1,29 @@
+name: Brandrails
+description: Regenerate AI rules files from a DTCG tokens.json and flag design-token drift in pull requests.
+author: Matej Holek
+branding:
+  icon: layers
+  color: purple
+
+inputs:
+  command:
+    description: "What to run: `check` (drift check) or `generate` (write rules files)."
+    required: false
+    default: check
+  tokens:
+    description: Path to the DTCG tokens file.
+    required: false
+    default: tokens.json
+  base:
+    description: Base ref to diff against for `check`.
+    required: false
+    default: ${{ github.base_ref }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+    - shell: bash
+      run: node "${{ github.action_path }}/bin/brandrails.js" "${{ inputs.command }}" --tokens "${{ inputs.tokens }}" --base "${{ inputs.base }}"
