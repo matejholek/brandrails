@@ -12,7 +12,7 @@ export function readDarkOverrides(css: string): CustomProperties {
 
 /**
  * Selectors outside `:root` that define their own set of custom properties, such as a page with its
- * own palette (`.landing-page { --bg: #F2F0EA; … }`). Tailwind's `--tw-*` internals don't count.
+ * own palette (`.landing-page { --bg: #fafaf9; … }`). Tailwind's `--tw-*` internals don't count.
  */
 export function readScopedThemes(css: string, min = 3): string[] {
   const out = new Set<string>();

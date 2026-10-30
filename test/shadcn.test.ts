@@ -14,18 +14,18 @@ const css = `
   :root { --ignored-inside-layer: 1px; }
 }
 :root {
-  --background: 40 30% 96%;
-  --primary: 72 80% 55%;
-  --primary-foreground: 240 10% 10%;
-  --sidebar-ring: 72 80% 55%;
-  --brand: #c3e830;
+  --background: 0 0% 100%;
+  --primary: 221 83% 53%;
+  --primary-foreground: 222 47% 11%;
+  --sidebar-ring: 221 83% 53%;
+  --brand: #2563eb;
   --ring: var(--brand);
   --radius: 1rem;
-  --gradient-lime: linear-gradient(135deg, hsl(72, 80%, 55%), hsl(72, 85%, 65%));
+  --gradient-hero: linear-gradient(135deg, hsl(221, 83%, 53%), hsl(262, 83%, 58%));
   --header-height: 64px;
 }
-.dark { --background: 240 10% 4%; --primary: 72 80% 60%; }
-.landing-page { --bg: #F2F0EA; --ink: #0E0E10; --lime: #C6F54E; }
+.dark { --background: 240 10% 4%; --primary: 217 91% 60%; }
+.landing-page { --bg: #fafaf9; --ink: #1c1917; --accent: #f97316; }
 *, ::before, ::after { --tw-ring-offset-width: 0px; --tw-ring-color: rgb(59 130 246 / .5); --tw-shadow: 0 0 #0000; }
 `;
 
@@ -34,18 +34,18 @@ describe("shadcn/ui themes", () => {
 
   it("reads bare HSL channels and role names as colours", () => {
     expect(tokens.color).toMatchObject({
-      background: { $value: "hsl(40 30% 96%)", $type: "color" },
-      primary: { $value: "hsl(72 80% 55%)" },
-      "primary-foreground": { $value: "hsl(240 10% 10%)" },
-      "sidebar-ring": { $value: "hsl(72 80% 55%)" },
-      brand: { $value: "#c3e830" },
+      background: { $value: "hsl(0 0% 100%)", $type: "color" },
+      primary: { $value: "hsl(221 83% 53%)" },
+      "primary-foreground": { $value: "hsl(222 47% 11%)" },
+      "sidebar-ring": { $value: "hsl(221 83% 53%)" },
+      brand: { $value: "#2563eb" },
       ring: { $value: "{color.brand}" },
     });
   });
 
   it("maps a bare --radius to radius.base and keeps gradients", () => {
     expect(tokens.radius).toEqual({ base: { $value: "1rem", $type: "dimension" } });
-    expect(tokens.gradient).toMatchObject({ lime: { $type: "gradient" } });
+    expect(tokens.gradient).toMatchObject({ hero: { $type: "gradient" } });
     expect(skipped).toEqual(["--header-height"]);
   });
 

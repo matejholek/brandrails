@@ -11,7 +11,7 @@ Turn the design decisions already in a codebase into one source of truth, then t
 
 1. **Scan.** Find token sources, in this order:
    - Tailwind v4 `@theme { ... }` blocks in CSS files
-   - `:root` (and `[data-theme]` / `.dark`) CSS custom properties, including shadcn/ui role colours stored as bare HSL channels (`--primary: 72 80% 55%`, typical of Lovable, v0 and shadcn projects on Tailwind v3)
+   - `:root` (and `[data-theme]` / `.dark`) CSS custom properties, including shadcn/ui role colours stored as bare HSL channels (`--primary: 221 83% 53%`, typical of Lovable, v0 and shadcn projects on Tailwind v3)
    - SCSS variables and maps (`$color-*`, `$colors: (…)`, `map.get`)
    - Angular: the global `styles` in `angular.json` and the partials they `@use`; Angular Material `mat.theme()` typography, `mat.theme-overrides()` and `--mat-sys-*` values. Palettes like `mat.$azure-palette` are computed at build time, so tell the user to add overrides if they want those colours as tokens
    - an existing `tokens.json` (DTCG) — if present, treat it as the source and skip to step 3

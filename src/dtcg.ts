@@ -36,7 +36,7 @@ const NAMESPACES: [prefix: string, group: string, type: TokenType][] = [
   ["gradient", "gradient", "gradient"],
 ];
 
-// shadcn/ui and Tailwind v3 setups store colours as bare HSL channels (`--primary: 72 80% 55%`)
+// shadcn/ui and Tailwind v3 setups store colours as bare HSL channels (`--primary: 221 83% 53%`)
 // and wrap them in hsl() at the point of use.
 const HSL_CHANNELS = /^-?\d*\.?\d+(?:deg)?\s+\d*\.?\d+%\s+\d*\.?\d+%$/;
 const COLOUR_LITERAL = /^(?:#[0-9a-fA-F]{3,8}|(?:rgba?|hsla?|hwb|oklch|oklab|lab|lch|color)\(.*\))$/;

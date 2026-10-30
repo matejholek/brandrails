@@ -5,7 +5,7 @@ import { scanLines } from "../src/check/scan.js";
 const tokens = {
   color: {
     $type: "color",
-    primary: { $value: "hsl(72 80% 55%)" },
+    primary: { $value: "hsl(221 83% 53%)" },
     ring: { $value: "{color.primary}" },
     foreground: { $value: "#1a1a1f" },
     accent: { $value: "rgb(153 82 224)" },
@@ -25,8 +25,8 @@ describe("nearest colour token", () => {
 
   it("names the closest token, preferring a base name over its aliases", () => {
     const nearest = nearestColourToken(tokens);
-    expect(nearest("#c8ff00")).toBe("color.primary");
-    expect(nearest("#C8F135")).toBe("color.primary");
+    expect(nearest("#2563ea")).toBe("color.primary");
+    expect(nearest("#3b6fe0")).toBe("color.primary");
     expect(nearest("#0a0a0a")).toBe("color.foreground");
     expect(nearest("hsl(270, 70%, 60%)")).toBe("color.accent");
   });
@@ -38,12 +38,12 @@ describe("nearest colour token", () => {
 
   it("puts the suggestion in the check message", () => {
     const findings = scanLines(
-      [{ file: "src/Hero.tsx", line: 3, text: `<a className="bg-[#c8ff00] text-[#e1523f]" style={{ color: "rgb(150, 80, 220)" }}>` }],
+      [{ file: "src/Hero.tsx", line: 3, text: `<a className="bg-[#2563ea] text-[#e1523f]" style={{ color: "rgb(150, 80, 220)" }}>` }],
       () => false,
       nearestColourToken(tokens),
     );
     expect(findings.map((f) => f.message)).toEqual([
-      "Hard-coded #c8ff00: use `color.primary`, the closest colour token",
+      "Hard-coded #2563ea: use `color.primary`, the closest colour token",
       "Hard-coded #e1523f: use a colour token",
       "Hard-coded rgb() colour: use `color.accent`, the closest colour token",
     ]);

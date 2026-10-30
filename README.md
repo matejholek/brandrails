@@ -8,7 +8,7 @@ Brandrails turns the design decisions already in your codebase into one `tokens.
 
 ## What it does
 
-1. **Reads** tokens from Tailwind v4 `@theme`, CSS custom properties (including shadcn/ui themes such as `--primary: 72 80% 55%`), SCSS variables and maps, and Angular (`angular.json` styles, Angular Material 3 themes). It tells you what it left out: dark-theme overrides and page-scoped palettes outside `:root`.
+1. **Reads** tokens from Tailwind v4 `@theme`, CSS custom properties (including shadcn/ui themes such as `--primary: 221 83% 53%`), SCSS variables and maps, and Angular (`angular.json` styles, Angular Material 3 themes). It tells you what it left out: dark-theme overrides and page-scoped palettes outside `:root`.
 2. **Writes** one DTCG `tokens.json` as the single source of truth.
 3. **Generates** rules for:
    - `AGENTS.md` (design section) and `CLAUDE.md` (imports `@AGENTS.md`)
@@ -85,7 +85,7 @@ It scans only lines added since `main` and fails on hard-coded hex, `rgb()`/`hsl
 For a hard-coded colour close to a token, the message names it:
 
 ```
-src/Hero.tsx:5  Hard-coded #c8ff00: use `color.lime-light`, the closest colour token
+src/Hero.tsx:5  Hard-coded #2563ea: use `color.primary`, the closest colour token
 ```
 
 ## Roadmap
