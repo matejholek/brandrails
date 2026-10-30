@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.0
+
+shadcn/ui projects on Tailwind v3 (the default for Lovable, v0 and most shadcn setups) store colours as bare HSL channels with no `--color-` prefix, so 0.2.0 skipped nearly all of their theme.
+
+### Added
+
+- shadcn/ui themes: custom properties with no known prefix are read as colours when their value is one. Bare HSL channels (`--primary: 221 83% 53%`) become `hsl(221 83% 53%)`; hex, `rgb()`, `hsl()`, `oklch()` and `var()` chains to a colour also count. `--sidebar-ring`, `--brand`, `--card-foreground` and the like land in `color.*`.
+- A bare `--radius` or `--spacing` becomes `radius.base` / `spacing.base`.
+- `--gradient-*` becomes `gradient.*` (`$type: gradient`).
+- Shadcn on Tailwind v4 (`@theme inline { --color-primary: var(--primary) }`) keeps the `:root` value instead of a self-alias.
+- `generate` notes dark-theme overrides (`.dark`, `[data-theme=dark]`) it did not read, and selectors outside `:root` that define their own palette (`.landing-page { --bg: #fafaf9; … }`).
+- `check` names the closest colour token for a hard-coded hex, `rgb()` or `hsl()` colour (OKLab distance), for example ``use `color.primary`, the closest colour token``.
+
+### Fixed
+
+- The AGENTS.md / Copilot index collapsed any group of more than six tokens to `color.{first,…,last}`, which hid role names like `primary` and `muted-foreground`. Only numeric scales collapse now.
+
 ## 0.2.0
 
 ### Changed

@@ -1,9 +1,9 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { parseDtcg, toDtcg, type DtcgResult, type TokenGroup } from "./dtcg.js";
 import { readAngularJson } from "./read/angular.js";
 import type { CustomProperties } from "./read/blocks.js";
-import { readCssVars } from "./read/css-vars.js";
+import { readCssVars, readDarkOverrides, readScopedThemes } from "./read/css-vars.js";
 import { fromMaterialSys, readMaterialTheme } from "./read/material.js";
 import { readSassVariables, readScssVariables, scssDependencies, stripScssComments } from "./read/scss.js";
 import { readTailwindTheme } from "./read/tailwind-theme.js";
@@ -60,6 +60,13 @@ export function tokensFromFiles(files: string[]): ReadResult {
     }
     const css = /\.scss$/.test(file) ? stripScssComments(source) : source;
     const vars: CustomProperties = { ...readTailwindTheme(css), ...readCssVars(css) };
+    const dark = Object.keys(readDarkOverrides(css)).length;
+    if (dark) notes.add(`${dark} dark-theme overrides in ${basename(file)} were not read; tokens.json holds the default (light) values.`);
+    const scoped = readScopedThemes(css);
+    if (scoped.length) {
+      const shown = scoped.slice(0, 4).join(", ") + (scoped.length > 4 ? ", …" : "");
+      notes.add(`Custom properties outside :root in ${basename(file)} were not read: ${shown}. If these are separate palettes, fold them into :root or tokens.json.`);
+    }
     for (const [prop, value] of Object.entries(vars)) {
       const [name, v] = prop.startsWith("--mat-sys-") ? fromMaterialSys(prop.slice(10), value) : [prop, value];
       props[name] = v;

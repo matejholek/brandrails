@@ -4,11 +4,11 @@
 
 Brandrails turns the design decisions already in your codebase into one `tokens.json` ([DTCG format](https://www.designtokens.org/)), generates design rules for every AI tool your team uses, and flags drift on every pull request.
 
-> Status: v0.2, early. Feedback and issues welcome. See the [changelog](CHANGELOG.md).
+> Status: v0.3, early. Feedback and issues welcome. See the [changelog](CHANGELOG.md).
 
 ## What it does
 
-1. **Reads** tokens from Tailwind v4 `@theme`, CSS custom properties, SCSS variables and maps, and Angular (`angular.json` styles, Angular Material 3 themes).
+1. **Reads** tokens from Tailwind v4 `@theme`, CSS custom properties (including shadcn/ui themes such as `--primary: 221 83% 53%`), SCSS variables and maps, and Angular (`angular.json` styles, Angular Material 3 themes). It tells you what it left out: dark-theme overrides and page-scoped palettes outside `:root`.
 2. **Writes** one DTCG `tokens.json` as the single source of truth.
 3. **Generates** rules for:
    - `AGENTS.md` (design section) and `CLAUDE.md` (imports `@AGENTS.md`)
@@ -82,11 +82,18 @@ npx brandrails check --base main --ignore "public/**"
 
 It scans only lines added since `main` and fails on hard-coded hex, `rgb()`/`hsl()` colours and px spacing or radius (CSS declarations, Tailwind values like `p-[13px]` and Angular bindings like `[style.padding.px]`). Token definitions (`--color-x: #fff`, `$color-x: #fff`, SCSS map entries), `0px`, border widths and build output are allowed. It also fails when the rules files are out of date with `tokens.json`. Put `brandrails-ignore` in a comment on a line to allow it.
 
+For a hard-coded colour close to a token, the message names it:
+
+```
+src/Hero.tsx:5  Hard-coded #2563ea: use `color.primary`, the closest colour token
+```
+
 ## Roadmap
 
 - **v0.1** — React + Tailwind v4 and plain CSS readers, the rules writers, drift check
 - **v0.2** — Angular (`angular.json`, Material 3 themes), SCSS variables and maps, skill shipped as `skill/brandrails/SKILL.md`
-- **v0.3** — Figma variables compare, Vue and web components
+- **v0.3** — shadcn/ui and Lovable themes, nearest-token suggestions in `check`
+- **v0.4** — Figma variables compare, Vue and web components
 
 ## License
 

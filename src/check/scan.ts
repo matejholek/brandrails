@@ -11,7 +11,7 @@ const IGNORE_COMMENT = /brandrails-ignore/;
 // Hex colours, but not URL fragments (href="#main"), entities (&#123;) or HTML text (<br>#212121).
 const HEX = /(?<![\w&/="'>-]|href=["']|url\(["']?)#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})(?![\w-])/g;
 // rgb(12 34 56) / hsla(…) with literal numbers; rgb(var(--x)) is fine.
-const COLOUR_FN = /\b(?:rgba?|hsla?|oklch|oklab|lab|lch)\(\s*-?\d/g;
+const COLOUR_FN = /\b(?:rgba?|hsla?|oklch|oklab|lab|lch)\(\s*-?\d[^()]*\)?/g;
 // px on spacing and radius: CSS declarations and Tailwind arbitrary values like p-[13px].
 const PX_DECL =
   /(?<![\w-])(?:margin|padding|gap|row-gap|column-gap|inset|top|right|bottom|left|border-radius|(?:margin|padding|inset|scroll-margin|scroll-padding)-[a-z-]+|border-[a-z-]*radius)\s*:[^;{}]*?(?<![\w.])(?!0px)\d*\.?\d+px/g;
@@ -52,7 +52,15 @@ export function addedLines(diff: string): AddedLine[] {
   return out;
 }
 
-export function scanLines(lines: AddedLine[], skip: (file: string) => boolean = () => false): Finding[] {
+/**
+ * `nearest` names the token closest to a hard-coded colour (see nearestColourToken), so the
+ * message can say which token to use instead of only that one is missing.
+ */
+export function scanLines(
+  lines: AddedLine[],
+  skip: (file: string) => boolean = () => false,
+  nearest: (colour: string) => string | undefined = () => undefined,
+): Finding[] {
   const findings: Finding[] = [];
   for (const { file, line, text } of lines) {
     if (!STYLE_FILE.test(file) || skip(file)) continue;
@@ -60,8 +68,12 @@ export function scanLines(lines: AddedLine[], skip: (file: string) => boolean = 
     if (/\.s[ac]ss$/.test(file) && SCSS_MAP_ENTRY.test(text)) continue;
     const report = (rule: Finding["rule"], value: string, hint: string) =>
       findings.push({ file, line, rule, message: `Hard-coded ${value}: ${hint}` });
-    for (const m of text.matchAll(HEX)) report("hex-colour", m[0], "use a colour token");
-    for (const m of text.matchAll(COLOUR_FN)) report("colour-function", `${m[0].replace(/\(.*/, "")}() colour`, "use a colour token");
+    const colourHint = (colour: string) => {
+      const token = nearest(colour);
+      return token ? `use \`${token}\`, the closest colour token` : "use a colour token";
+    };
+    for (const m of text.matchAll(HEX)) report("hex-colour", m[0], colourHint(m[0]));
+    for (const m of text.matchAll(COLOUR_FN)) report("colour-function", `${m[0].replace(/\(.*/s, "")}() colour`, colourHint(m[0]));
     for (const m of text.matchAll(PX_DECL)) report("px-spacing", m[0].match(/[\d.]+px/)![0], "use a spacing or radius token");
     for (const m of text.matchAll(PX_TAILWIND)) report("px-spacing", m[0], "use a spacing or radius token");
     for (const m of text.matchAll(PX_ANGULAR)) report("px-spacing", m[0], "bind a spacing or radius token instead of px");
