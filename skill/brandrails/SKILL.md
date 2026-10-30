@@ -11,14 +11,14 @@ Turn the design decisions already in a codebase into one source of truth, then t
 
 1. **Scan.** Find token sources, in this order:
    - Tailwind v4 `@theme { ... }` blocks in CSS files
-   - `:root` (and `[data-theme]` / `.dark`) CSS custom properties
+   - `:root` (and `[data-theme]` / `.dark`) CSS custom properties, including shadcn/ui role colours stored as bare HSL channels (`--primary: 72 80% 55%`, typical of Lovable, v0 and shadcn projects on Tailwind v3)
    - SCSS variables and maps (`$color-*`, `$colors: (…)`, `map.get`)
    - Angular: the global `styles` in `angular.json` and the partials they `@use`; Angular Material `mat.theme()` typography, `mat.theme-overrides()` and `--mat-sys-*` values. Palettes like `mat.$azure-palette` are computed at build time, so tell the user to add overrides if they want those colours as tokens
    - an existing `tokens.json` (DTCG) — if present, treat it as the source and skip to step 3
 
    Read tokens only. Do not parse components; leave those to Figma and Storybook tooling.
 
-   `npx brandrails generate --from <file>` does this deterministically for CSS, SCSS and `angular.json` (in an Angular workspace with no `tokens.json`, plain `npx brandrails generate` reads `angular.json`). Prefer it over hand-parsing, then review its output with the user.
+   `npx brandrails generate --from <file>` does this deterministically for CSS, SCSS and `angular.json` (in an Angular workspace with no `tokens.json`, plain `npx brandrails generate` reads `angular.json`). Prefer it over hand-parsing, then review its output with the user. Pass its `note:` lines on: dark-theme overrides are not in `tokens.json` yet, and selectors outside `:root` with their own custom properties (`.landing-page { --bg: … }`) are usually a second palette the user should merge or retire.
 
 2. **Propose `tokens.json`.** Write a DTCG file (W3C Design Tokens format: `$value`, `$type`, `$description`, groups by category: `color`, `dimension`/`spacing`, `typography`, `radius`, `shadow`, `motion`). Show the user a short summary: how many tokens per group, duplicates merged, values that had no name. Wait for approval before writing.
 

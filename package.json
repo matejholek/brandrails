@@ -1,7 +1,7 @@
 {
   "name": "brandrails",
-  "version": "0.2.0",
-  "description": "Keep AI coding agents on your design system: one DTCG tokens.json from Tailwind, CSS, SCSS or Angular Material, generated rules files for Claude Code, Cursor, Copilot and Figma Make, and a drift check on every PR.",
+  "version": "0.3.0",
+  "description": "Keep AI coding agents on your design system: one DTCG tokens.json from Tailwind, shadcn/ui, CSS, SCSS or Angular Material, generated rules files for Claude Code, Cursor, Copilot and Figma Make, and a drift check on every PR.",
   "license": "MIT",
   "author": "Matej Holek",
   "repository": {

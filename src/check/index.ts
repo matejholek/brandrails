@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseDtcg } from "../dtcg.js";
 import { RULES_FILES, renderAll } from "../generate.js";
+import { nearestColourToken } from "./nearest.js";
 import { addedLines, DEFAULT_IGNORE, globToRegExp, scanLines, type Finding } from "./scan.js";
 
 export interface CheckOptions {
@@ -47,7 +48,8 @@ export function check({ root, tokens, base, ignore = [] }: CheckOptions): Findin
   const diff = git(root, ["diff", "--relative", "--unified=0", "--no-color", "--no-ext-diff", "--diff-filter=AM", `${ref}...HEAD`]);
   const generated = new Set<string>([...RULES_FILES, tokens]);
   const ignored = [...DEFAULT_IGNORE, ...ignore].map(globToRegExp);
-  const findings = scanLines(addedLines(diff), (file) => generated.has(file) || ignored.some((re) => re.test(file)));
+  const nearest = existsSync(join(root, tokens)) ? nearestColourToken(parseDtcg(readFileSync(join(root, tokens), "utf8")).tokens) : undefined;
+  const findings = scanLines(addedLines(diff), (file) => generated.has(file) || ignored.some((re) => re.test(file)), nearest);
   for (const path of staleFiles(root, tokens)) {
     findings.push({ file: path, line: 1, rule: "stale-rules", message: `Out of date with ${tokens}: run brandrails generate` });
   }

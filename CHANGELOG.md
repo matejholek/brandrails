@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.0
+
+Found by running Brandrails against a live Lovable site (shadcn/ui on Tailwind v3), where 0.2.0 kept 4 of 46 `:root` properties.
+
+### Added
+
+- shadcn/ui themes: custom properties with no known prefix are read as colours when their value is one. Bare HSL channels (`--primary: 72 80% 55%`) become `hsl(72 80% 55%)`; hex, `rgb()`, `hsl()`, `oklch()` and `var()` chains to a colour also count. `--sidebar-ring`, `--lime`, `--card-foreground` and the like land in `color.*`.
+- A bare `--radius` or `--spacing` becomes `radius.base` / `spacing.base`.
+- `--gradient-*` becomes `gradient.*` (`$type: gradient`).
+- Shadcn on Tailwind v4 (`@theme inline { --color-primary: var(--primary) }`) keeps the `:root` value instead of a self-alias.
+- `generate` notes dark-theme overrides (`.dark`, `[data-theme=dark]`) it did not read, and selectors outside `:root` that define their own palette (`.landing-page { --bg: #F2F0EA; … }`).
+- `check` names the closest colour token for a hard-coded hex, `rgb()` or `hsl()` colour (OKLab distance), for example ``use `color.primary`, the closest colour token``.
+
+### Fixed
+
+- The AGENTS.md / Copilot index collapsed any group of more than six tokens to `color.{first,…,last}`, which hid role names like `primary` and `muted-foreground`. Only numeric scales collapse now.
+
 ## 0.2.0
 
 ### Changed

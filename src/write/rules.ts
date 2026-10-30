@@ -12,6 +12,7 @@ const GROUP_TITLES: Record<string, string> = {
   shadow: "Shadow",
   duration: "Motion: duration",
   easing: "Motion: easing",
+  gradient: "Gradient",
 };
 
 export interface RenderOptions {
@@ -78,13 +79,16 @@ function runs(list: FlatToken[]): FlatToken[][] {
   return out;
 }
 
-// `color.text.{primary,muted}`; long scales show their ends only.
+// A numeric ramp (`50…950`) can be guessed from its ends; role names (`primary`, `muted-foreground`) cannot.
+const SCALE_STEP = /^\d+(?:\.\d+)?$/;
+
+// `color.text.{primary,muted}`; long numeric scales show their ends only.
 function indexLine(list: FlatToken[]): string {
   return runs(list)
     .map((run) => {
       if (run.length === 1) return `\`${run[0].path}\``;
       const leaves = run.map((t) => leafOf(t.path));
-      const shown = leaves.length > 6 ? [leaves[0], "…", leaves.at(-1)] : leaves;
+      const shown = leaves.length > 6 && leaves.every((l) => SCALE_STEP.test(l)) ? [leaves[0], "…", leaves.at(-1)] : leaves;
       return `\`${parentOf(run[0].path)}.{${shown.join(",")}}\``;
     })
     .join(", ");
