@@ -120,11 +120,17 @@ export function readSassVariables(sass: string): CustomProperties {
   return props;
 }
 
-/** Local partials pulled in with `@use`, `@forward` or `@import`. Packages and `sass:` modules are skipped. */
+/**
+ * Local partials pulled in with `@use`, `@forward` or `@import`. Packages and `sass:` modules are skipped.
+ * SCSS statements end in `;`; indented `.sass` statements end at the line break.
+ */
 export function scssDependencies(file: string, scss: string, includePaths: string[] = []): string[] {
   const deps: string[] = [];
   const source = stripScssComments(scss);
-  for (const m of source.matchAll(/@(?:use|forward|import)\s+([^;]+);/g)) {
+  const statement = file.endsWith(".sass")
+    ? /^[ \t]*@(?:use|forward|import)\s+(.+)$/gm
+    : /@(?:use|forward|import)\s+([^;]+);/g;
+  for (const m of source.matchAll(statement)) {
     for (const spec of m[1].matchAll(/["']([^"']+)["']/g)) {
       const found = resolvePartial(spec[1], [dirname(file), ...includePaths]);
       if (found) deps.push(found);

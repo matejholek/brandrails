@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Indented `.sass` files: `@use`, `@forward` and `@import` lines are now followed. They were only matched when they ended in `;`, so partials were skipped and aliases to their variables broke; a later `;` (for example in a data URI) could make the match run across lines. `.scss` is unchanged. Reported in #3.
+
 ## 0.3.0
 
 shadcn/ui projects on Tailwind v3 (the default for Lovable, v0 and most shadcn setups) store colours as bare HSL channels with no `--color-` prefix, so 0.2.0 skipped nearly all of their theme.
